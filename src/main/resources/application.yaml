@@ -1,0 +1,8 @@
+
+wxmini:
+  appid: "wxe5a5ab81df7326c4"
+  secret: "6499a01a2ae956b15e24da3ba73ae9e8"
+
+file-save-path: /file_system/
+file-base-url: https://903.ink/file_system/
+

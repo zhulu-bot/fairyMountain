@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>登录页面</title>
+<link rel="stylesheet" href="styles.css">
+<script>
+function login() {
+  var username = document.getElementById("username").value;
+  var password = document.getElementById("password").value;
+  var data = {
+    username: username,
+    password: password
+  };
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "localhost:49820/fairyMountain/authentication/form", true);
+  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhr.send(JSON.stringify(data));
+}
+</script>
+</head>
+<body>
+
+<h1>欢迎登录</h1>
+
+<form action="" onsubmit="login()">
+<label for="username">用户名:</label><br>
+<input type="text" id="username" name="username"><br>
+<label for="password">密码:</label><br>
+<input type="password" id="password" name="password"><br><br>
+<input type="submit" value="登录">
+</form> 
