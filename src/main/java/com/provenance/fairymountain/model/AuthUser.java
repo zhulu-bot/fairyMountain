@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 用于微信身份认证的实体
+ * 集成了UserDetail是用户名密码登录的认证实体
  */
 @Data
 public class AuthUser implements UserDetails {
