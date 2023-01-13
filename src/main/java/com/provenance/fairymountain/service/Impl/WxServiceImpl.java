@@ -200,7 +200,7 @@ public class WxServiceImpl implements WxService {
         User user = new User();
         userMapper.insert(user);
         //插入后会把数据回填给user对象
-        wxUserInfo.setUserId(user.getUid());
+        wxUserInfo.setUserId(user.getUserId());
         wxUserInfoMapper.insert(wxUserInfo);
         return user;
     }

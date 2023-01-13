@@ -46,7 +46,7 @@ public class JwtLoginFilter extends AbstractAuthenticationProcessingFilter {
         //配置额外的过滤器了，oauth2是微信遵守的协议，我用的JWT验证权限
         AuthUser user = new AuthUser();
         //验证密码时最先被调用
-        System.out.println("attemptAuthentication" + "被调用");
+        log.info("attemptAuthentication被调用");
         String username = req.getParameter("username");
         String password = req.getParameter("password");
         user.setUsername(username);

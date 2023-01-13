@@ -40,7 +40,7 @@ public class RedisUserMapper {
      */
     public void redisUpdataUser(User user){
 
-        redisTemplate.opsForValue().set(user.getUid(),user);
+        redisTemplate.opsForValue().set(user.getUserId(),user);
     }
 
     public void  deleteUserById(int userId){

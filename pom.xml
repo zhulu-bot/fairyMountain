@@ -103,7 +103,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <configuration>
-                    <mainClass>com.example.secondhand.Application</mainClass>
+                    <mainClass>com.provenance.fairymountain.FairyMountainApplication</mainClass>
                     <fork>true</fork> <!-- 如果没有该配置，devtools不会生效  打包 将外部jar包打包进项目中 -->
                     <includeSystemScope>true</includeSystemScope> <!-- 打包 将外部jar包打包进项目中 -->
                 </configuration>
