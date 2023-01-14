@@ -92,7 +92,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 //在这里加条件来控制放行那个，加表达式，就是不知道该怎么判断是否登陆了，登录与没登录的区别在于
                 //  SecurityContextHolder.getContext().setAuthentication(token);
                 //它默认会去session找user来匹配权限，能不能让它去SecurityContextHolder.getContext().setAuthentication(token);里找
-                .antMatchers("/business/getAllBusiness").permitAll()
+                .antMatchers("/authLogin").permitAll()
+                .antMatchers("/getSessionId").permitAll()
                 //这里每一个请求我都在这里配置了，理论上可以通过注解+AOP在controller的方法上写注解
                 .anyRequest().authenticated() //其他所有请求都需要认证
                 //.antMatchers("/admin").hasAnyRole("user")  权限控制，配置角色
