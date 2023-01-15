@@ -18,6 +18,7 @@ import com.provenance.fairymountain.response.ResultCode;
 import com.provenance.fairymountain.service.WxService;
 import com.provenance.fairymountain.utils.TokenUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,13 +32,17 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
+import java.security.AlgorithmParameters;
+import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-@Service
+
 @Slf4j
+@Service
 public class WxServiceImpl implements WxService {
     @Autowired
     private WxUserInfoMapper wxUserInfoMapper;
@@ -45,8 +50,6 @@ public class WxServiceImpl implements WxService {
     private String secret;
     @Value("${wxmini.appid}")
     private String appid;
-    @Autowired
-    private WxService wxService;
     @Autowired
     private RedisTemplate redisTemplate;
     @Autowired
@@ -79,20 +82,35 @@ public class WxServiceImpl implements WxService {
         JSONObject jsonObject = JSONUtil.parseObj(jsons);
         String sessionKey = (String) jsonObject.get("session_key");
         log.info("\"wxSerciceImpl\",\"wxDecrypt\",\"解密时拿到的sessionKey\"+sessionKey");
-        byte[] encData = cn.hutool.core.codec.Base64.decode(encryptedData);
-        byte[] iv = cn.hutool.core.codec.Base64.decode(vi);
-        byte[] key = Base64.decode(sessionKey);
-        AlgorithmParameterSpec ivSpec = new IvParameterSpec(iv);
-        String res = "";
+        byte[] dataByte = cn.hutool.core.codec.Base64.decode(encryptedData);
+        byte[] ivByte = cn.hutool.core.codec.Base64.decode(vi);
+        byte[] keyByte = cn.hutool.core.codec.Base64.decode(sessionKey);
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
-            res = new String(cipher.doFinal(encData), "UTF-8");
-            log.info("wxserviceImpl", "wxDecrypt", "解密到原始数据" + res);
+            // 如果密钥不足16位，那么就补足.  这个if 中的内容很重要
+            int base = 16;
+            if (keyByte.length % base != 0) {
+                int groups = keyByte.length / base + (keyByte.length % base != 0 ? 1 : 0);
+                byte[] temp = new byte[groups * base];
+                Arrays.fill(temp, (byte) 0);
+                System.arraycopy(keyByte, 0, temp, 0, keyByte.length);
+                keyByte = temp;
+            }
+            // 初始化
+            Security.addProvider(new BouncyCastleProvider());
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding", "BC");
+            SecretKeySpec spec = new SecretKeySpec(keyByte, "AES");
+            AlgorithmParameters parameters = AlgorithmParameters.getInstance("AES");
+            parameters.init(new IvParameterSpec(ivByte));
+            cipher.init(Cipher.DECRYPT_MODE, spec, parameters);// 初始化
+            byte[] resultByte = cipher.doFinal(dataByte);
+            if (null != resultByte && resultByte.length > 0) {
+                String result = new String(resultByte, "UTF-8");
+                log.info("wxserviceImpl", "wxDecrypt", "解密到原始数据" + result);
+                return result;
+            }
         } catch (Exception e) {
         }
-        return res;
+        return null;
     }
 
     @Override
@@ -137,7 +155,7 @@ public class WxServiceImpl implements WxService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public RespBean authLogin(WXAuth wxAuth) {
         //将加密信息解密成字符串，调用了另一个service
-        String wxRes = wxService.wxDecrypt(wxAuth.getEncryptedData(), wxAuth.getSessionId(), wxAuth.getIv());
+        String wxRes = wxDecrypt(wxAuth.getEncryptedData(), wxAuth.getSessionId(), wxAuth.getIv());
         //判断如果解密出来的消息为空说明登陆超时,解密不为空则登录成功
         if ("".equals(wxRes)) {
             return RespBean.error("登陆超时", ResultCode.USER_ACCOUNT_USE_BY_OTHERS);
@@ -157,20 +175,18 @@ public class WxServiceImpl implements WxService {
         wxUserInfo.setOpenId(openId);
         HashMap<String, Object> res = null;
         //查看数据库中是否有Openid对应的用户
-        WxUserInfo wxUserIndataBase = wxService.getWxUserByOpenId(openId);
+        WxUserInfo wxUserIndataBase = getWxUserByOpenId(openId);
         User user = null;
         if (wxUserIndataBase == null) {
             //这里说明用户没有登陆过，就注册用户将用户写入数据库
             //写入两个表，一个wx_user 一个user
-            WxService wxService = applicationContext.getBean(WxService.class);
             //通过容器获取service，为了织入aop
-            wxService.saveWxUser(wxUserInfo);
             //更新userid
-            user = wxService.saveWxUser(wxUserInfo);
+            user = saveWxUser(wxUserInfo);//TODO
         } else {
             //之前注册过,通过OpenId获取user，返回一个token，还要返回user的数据
             QueryWrapper<User> userQueryWrapper = new QueryWrapper<User>();
-            userQueryWrapper.eq("uid", wxUserIndataBase.getUserId());
+            userQueryWrapper.eq("user_id", wxUserIndataBase.getUserId());
             user = userMapper.selectOne(userQueryWrapper);
         }
         res = new HashMap<String, Object>();
@@ -186,6 +202,7 @@ public class WxServiceImpl implements WxService {
             return RespBean.ok(ResultCode.SUCCESS.getMessage(), res);
         } else return RespBean.error(ResultCode.COMMON_FAIL);
     }
+
     /**
      * @param wxUserInfo
      * @return
