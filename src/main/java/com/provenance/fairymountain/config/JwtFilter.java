@@ -4,8 +4,10 @@ package com.provenance.fairymountain.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.provenance.fairymountain.response.RespBean;
 import com.provenance.fairymountain.response.ResultCode;
+import com.provenance.fairymountain.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -25,6 +27,9 @@ import java.util.List;
  * 这个类处理前端传过来的token，处理一般请求，除了登录表单的提交
  */
 public class JwtFilter extends GenericFilterBean {
+    @Autowired
+    private UserService userService;
+
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) servletRequest;
@@ -57,6 +62,7 @@ public class JwtFilter extends GenericFilterBean {
                 //获取用户权限，authorities为JwtLoginFilter中定义的名字
                 List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList((String) claims.get("authorities"));
                 //进行校验。生成token
+                //根据当前username获取userid
                 UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, null, authorities);
                 //把token放到一个类似全局容器的地方，这里只放了用户名和权限。有这两个就够了，就能让springSecurity验证权限了
                 //用户名是给我用的，权限是给security框架用的

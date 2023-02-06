@@ -2,6 +2,7 @@ package com.provenance.fairymountain.controller;
 
 import com.provenance.fairymountain.model.WXAuth;
 import com.provenance.fairymountain.response.RespBean;
+import com.provenance.fairymountain.service.UserService;
 import com.provenance.fairymountain.service.WxService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ public class AdminController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private WxService wxService;
+
 
 
     @GetMapping("/hello")
