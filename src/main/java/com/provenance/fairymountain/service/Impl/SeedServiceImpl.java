@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.provenance.fairymountain.mapper.SeedMapper;
 import com.provenance.fairymountain.model.Seed;
 import com.provenance.fairymountain.service.SeedService;
-import org.junit.After;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.lang.annotation.Annotation;
 import java.util.List;
 
 @Service
@@ -42,5 +41,11 @@ public class SeedServiceImpl implements SeedService {
         QueryWrapper<Seed> select = new QueryWrapper<Seed>();
         select.eq("user_id",userid);
         return seedMapper.selectList(select);
+    }
+
+    public Integer delSeeds(Integer seedid) {
+        QueryWrapper<Seed> select = new QueryWrapper<Seed>();
+        select.eq("seed_id",seedid);
+        return seedMapper.delete(select);
     }
 }

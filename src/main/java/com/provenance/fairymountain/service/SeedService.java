@@ -8,4 +8,5 @@ public interface SeedService {
     public Seed getSeed(String category, String quality);
     public Seed updateSeed(Seed seed);
     public List<Seed> getSeeds(Long userid);
+    public Integer delSeeds(Integer seedid);
 }

@@ -14,3 +14,43 @@
 ​	权限模型使用RBAC1，数据库中建立5个表，用户 角色 权限 用户角色关系 角色权限关系，一个用户只能为一个角色，角色可以继承，子角色有父角色所有权限。
     在tokenUtils通过查询数据库角色权限信息配置用户权限，现在先不写，默认拥有全部权限
 微信小程序是可以自动获取手机号的，这个以后再写
+
+学习一下Mybatis-plus 新的join功能
+
+class test {
+@Resource
+private UserMapper userMapper;
+
+    void testJoin() {
+        List<UserDTO> list = userMapper.selectJoinList(UserDTO.class,
+                new MPJLambdaWrapper<UserDO>()
+                        .selectAll(UserDO.class)
+                        .select(UserAddressDO::getTel)
+                        .selectAs(UserAddressDO::getAddress, UserDTO::getUserAddress)
+                        .select(AreaDO::getProvince, AreaDO::getCity)
+                        .leftJoin(UserAddressDO.class, UserAddressDO::getUserId, UserDO::getId)
+                        .leftJoin(AreaDO.class, AreaDO::getId, UserAddressDO::getAreaId)
+                        .eq(UserDO::getId, 1)
+                        .like(UserAddressDO::getTel, "1")
+                        .gt(UserDO::getId, 5));
+    }
+}
+
+
+SELECT
+t.id,
+t.name,
+t.sex,
+t.head_img,
+t1.tel,
+t1.address AS userAddress,
+t2.province,
+t2.city
+FROM
+user t
+LEFT JOIN user_address t1 ON t1.user_id = t.id
+LEFT JOIN area t2 ON t2.id = t1.area_id
+WHERE (
+t.id = ?
+AND t1.tel LIKE ?
+AND t.id > ?)
